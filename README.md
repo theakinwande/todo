@@ -29,7 +29,7 @@ A professional, full-stack Todo Management system built with React, React Router
 1. Clone the project
 
 ```bash
-git clone <https://github.com/Oluwabukunmi07/todo-app.git>
+git clone https://github.com/Oluwabukunmi07/todo-app.git
 cd todo-app
 ```
 
@@ -61,3 +61,5 @@ The application connects to the following endpoints:
 - `DELETE /tasks/:id` - Remove a task
 
 ## Project
+
+This project was made by Oluwabukunmi Akinbisola.
