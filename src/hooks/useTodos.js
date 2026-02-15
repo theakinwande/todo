@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { fetchTodos } from "../api/todoService";
+import { fetchTasks } from "../api/todoService";
 
-export function useTodos(page) {
+export function useTodos({ page, search, status, priority }) {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,9 +12,11 @@ export function useTodos(page) {
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchTodos(page);
-        // Assuming the API returns an object with `todos` and `totalPages`
-        const taskArray = Array.isArray(result) ? result : result.tasks || [];
+        const result = await fetchTasks({ page, search, status, priority });
+        // The API returns { data: [...], meta: { ... } }
+        const taskArray = Array.isArray(result)
+          ? result
+          : result.data || result.tasks || [];
         setTodos(taskArray);
         setTotalPages(result.meta?.totalPages || 1);
       } catch (err) {
@@ -24,7 +26,7 @@ export function useTodos(page) {
       }
     }
     getTodos();
-  }, [page]);
+  }, [page, search, status, priority]);
 
   return { todos, loading, error, totalPages };
 }

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { deleteTodo, updateTodo } from "../api/todoService";
+import { deleteTask, updateTask } from "../api/todoService";
 import { useTodoContext } from "../context/TodoContext";
 
 function TodoItem({ todo }) {
@@ -16,11 +16,12 @@ function TodoItem({ todo }) {
       };
 
       console.log("Updating todo:", todo.id, payload);
-      const updated = await updateTodo(todo.id, payload);
-      console.log("Update response:", updated);
+      const result = await updateTask(todo.id, payload);
+      const updatedTodo = result.data || result;
+      console.log("Update response:", updatedTodo);
 
       // Update local state so UI changes immediately
-      setTodos((prev) => prev.map((t) => (t.id === todo.id ? updated : t)));
+      setTodos((prev) => prev.map((t) => (t.id === todo.id ? updatedTodo : t)));
     } catch (err) {
       console.error("Update failed:", err);
       alert("Could not update status. Please try again.");
@@ -31,7 +32,7 @@ function TodoItem({ todo }) {
     // Confirmation dialog
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
-        await deleteTodo(todo.id);
+        await deleteTask(todo.id);
         // Update the UI by removing the deleted todo from the list
         setTodos((prev) => prev.filter((t) => t.id !== todo.id));
       } catch (err) {

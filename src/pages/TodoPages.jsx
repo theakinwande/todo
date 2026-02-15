@@ -13,17 +13,33 @@ function TodoPages() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
 
   // Get the global todos and loading state from context
   const { todos, setTodos } = useTodoContext();
 
   // Fetch initial data from hook
+  const todoParams = React.useMemo(
+    () => ({
+      page: currentPage,
+      search: searchQuery,
+      status:
+        statusFilter === "completed"
+          ? "DONE"
+          : statusFilter === "not_completed"
+          ? "TODO"
+          : undefined,
+      priority: priorityFilter !== "all" ? priorityFilter : undefined,
+    }),
+    [currentPage, searchQuery, statusFilter, priorityFilter]
+  );
+
   const {
     todos: fetchedTodos,
     loading,
     error,
     totalPages,
-  } = useTodos(currentPage);
+  } = useTodos(todoParams);
 
   // Keep Context todos in sync with fetched todos
   useEffect(() => {
@@ -31,6 +47,11 @@ function TodoPages() {
       setTodos(fetchedTodos);
     }
   }, [fetchedTodos, setTodos]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter]);
 
   // Handle loading and error states
   if (loading) return <Loader />;
@@ -41,19 +62,8 @@ function TodoPages() {
     setTodos((prev) => [newTodo, ...prev]);
   }
 
-  // Logic to filter todos by search query and status
-  const filteredTodos = (todos || []).filter((todo) => {
-    const matchesSearch = todo.name
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-
-    if (statusFilter === "completed") {
-      return matchesSearch && todo.status === "DONE";
-    } else if (statusFilter === "not_completed") {
-      return matchesSearch && todo.status !== "DONE";
-    }
-    return matchesSearch;
-  });
+  // Use todos directly since we filter on server side now
+  const filteredTodos = todos || [];
 
   return (
     <main className="w-full max-w-4xl mx-auto px-6 py-10 bg-white min-h-screen text-slate-900 shadow-lg">
@@ -80,6 +90,8 @@ function TodoPages() {
             className="text-slate-900"
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
           />
         </div>
       </div>

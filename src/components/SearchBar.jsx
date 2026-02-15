@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
-function SearchBar({ searchQuery, setSearchQuery }) {
+function SearchBar({ searchQuery, setSearchQuery, className }) {
+  // Internal state for immediate input feedback
+  const [internalSearch, setInternalSearch] = useState(searchQuery);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(internalSearch);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [internalSearch, setSearchQuery]);
+
   return (
-    <div className="relative w-full">
+    <div className={`relative w-full ${className || ""}`}>
       {/* Search Icon */}
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         <svg
@@ -24,8 +35,8 @@ function SearchBar({ searchQuery, setSearchQuery }) {
       <input
         type="text"
         placeholder="Search for a task..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        value={internalSearch}
+        onChange={(e) => setInternalSearch(e.target.value)}
         className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
       />
     </div>

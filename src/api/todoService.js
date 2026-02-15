@@ -1,58 +1,109 @@
-const BASE_URL = "https://api.oluwasetemi.dev";
 
-export async function fetchTodos(page = 1) {
-  const response = await fetch(`${BASE_URL}/tasks?page=${page}&limit=10`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch tasks");
-  }
-  return response.json();
-}
+const BASE_URL = 'https://api.oluwasetemi.dev';
 
-export async function fetchTodoById(id) {
-  const response = await fetch(`${BASE_URL}/tasks/${id}`);
-  if (!response.ok) {
-    throw new Error("Task not found");
-  }
-  return response.json();
-}
-
-export async function createTodo(todoData) {
-  const response = await fetch(`${BASE_URL}/tasks`, {
-    method: "POST",
+/**
+ * Generic request handler with error parsing
+ */
+const request = async (url, options = {}) => {
+  const response = await fetch(`${BASE_URL}${url}`, {
+    ...options,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
+      ...options.headers,
     },
-    body: JSON.stringify(todoData),
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to create task");
-  }
-  return response.json();
-}
+  // Handle 204 No Content
+  if (response.status === 204) return { success: true };
 
-export async function deleteTodo(id) {
-  const response = await fetch(`${BASE_URL}/tasks/${id}`, {
-    method: "DELETE",
+  const data = await response.json();
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.message ||
+      data?.error?.issues?.map((i) => i.message).join(', ') ||
+      `Request failed with status ${response.status}`;
+    throw new Error(errorMessage);
+  }
+
+  return data;
+};
+
+// ─── TASKS ──────────────────────────────────────────────────────
+
+/**
+ * Fetch paginated tasks with optional filters
+ * @param {Object} params - { page, limit, status, priority, search, sort }
+ */
+export const fetchTasks = async ({
+  page = 1,
+  limit = 10,
+  status,
+  priority,
+  search,
+  sort = 'DESC',
+} = {}) => {
+  const params = new URLSearchParams();
+  params.set('page', page);
+  params.set('limit', limit);
+  params.set('sort', sort);
+  if (status) params.set('status', status);
+  if (priority) params.set('priority', priority);
+  if (search) params.set('search', search);
+
+  return request(`/tasks?${params.toString()}`);
+};
+
+/**
+ * Fetch all tasks (no pagination)
+ */
+export const fetchAllTasks = async () => {
+  return request('/tasks?all=true');
+};
+
+/**
+ * Fetch a single task by ID
+ */
+export const fetchTaskById = async (id) => {
+  return request(`/tasks/${id}`);
+};
+
+/**
+ * Create a new task
+ * @param {Object} task - { name, status, description?, priority?, start?, end? }
+ */
+export const createTask = async (task) => {
+  return request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify(task),
   });
-  if (!response.ok) {
-    throw new Error("Failed to delete task");
-  }
-  return true;
-}
+};
 
-export async function updateTodo(id, payload) {
-  const response = await fetch(`${BASE_URL}/tasks/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
+/**
+ * Update a task
+ * @param {string} id
+ * @param {Object} updates
+ */
+export const updateTask = async (id, updates) => {
+  return request(`/tasks/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
   });
+};
 
-  if (!response.ok) {
-    throw new Error("Failed to update task");
-  }
+/**
+ * Delete a task
+ */
+export const deleteTask = async (id) => {
+  return request(`/tasks/${id}`, {
+    method: 'DELETE',
+  });
+};
 
-  return response.json();
-}
+/**
+ * Fetch children of a task
+ */
+export const fetchTaskChildren = async (id, { page = 1, limit = 10 } = {}) => {
+  const params = new URLSearchParams({ page, limit });
+  return request(`/tasks/${id}/children?${params.toString()}`);
+};
